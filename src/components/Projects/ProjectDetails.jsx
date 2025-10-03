@@ -24,10 +24,8 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       const data = getTasksByProjectId(project.id)
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -41,11 +39,10 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
-    
+
     try {
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       const newTask = {
         id: `task-${Date.now()}`,
         ...taskFormData,
@@ -54,7 +51,7 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
-      
+
       demoTasks.push(newTask);
 
       setTaskFormData({
@@ -74,11 +71,10 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
   const handleUpdateTask = async (e) => {
     e.preventDefault();
     if (!editingTask) return;
-    
+
     try {
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       const index = demoTasks.findIndex(t => t.id === editingTask.id);
       if (index > -1) {
         demoTasks[index] = {
@@ -108,9 +104,8 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
     try {
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       const index = demoTasks.findIndex(t => t.id === taskId);
       if (index > -1) {
         demoTasks.splice(index, 1);
@@ -124,9 +119,8 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
 
   const handleTaskStatusChange = async (taskId, newStatus) => {
     try {
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
       const index = demoTasks.findIndex(t => t.id === taskId);
       if (index > -1) {
         demoTasks[index] = {
@@ -188,13 +182,12 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+        <div className="fixed inset-0 transition-opacity -z-10" aria-hidden="true">
           <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
         </div>
 
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
           <div className="bg-white">
-            {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
@@ -225,9 +218,7 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
               </div>
             </div>
 
-            {/* Content */}
             <div className="px-6 py-4 max-h-[70vh] overflow-y-auto">
-              {/* Project Details */}
               <div className="mb-6">
                 {project.description && (
                   <div className="mb-4">
@@ -271,7 +262,6 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
                 </div>
               </div>
 
-              {/* Tasks Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-medium text-gray-900">
@@ -366,11 +356,10 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
                 )}
               </div>
 
-              {/* Task Form */}
               {showTaskForm && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                   <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                    <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                    <div className="fixed  -z-10 inset-0 transition-opacity" aria-hidden="true">
                       <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
                     </div>
 
@@ -384,15 +373,15 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
                             <button
                               type="button"
                               onClick={() => {
-                                setShowTaskForm(false)
-                                setEditingTask(null)
+                                setShowTaskForm(false);
+                                setEditingTask(null);
                                 setTaskFormData({
                                   title: '',
                                   description: '',
                                   status: 'pending',
                                   priority: 'medium',
                                   deadline: ''
-                                })
+                                });
                               }}
                               className="text-gray-400 hover:text-gray-500"
                             >
@@ -487,15 +476,15 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
                           <button
                             type="button"
                             onClick={() => {
-                              setShowTaskForm(false)
-                              setEditingTask(null)
+                              setShowTaskForm(false);
+                              setEditingTask(null);
                               setTaskFormData({
                                 title: '',
                                 description: '',
                                 status: 'pending',
                                 priority: 'medium',
                                 deadline: ''
-                              })
+                              });
                             }}
                             className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                           >
