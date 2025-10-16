@@ -9,12 +9,13 @@ export default function SignupForm({ onToggleMode }) {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'member', // Default value is 'member'
+    role: 'Member', // Default value is 'member'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,8 +109,8 @@ export default function SignupForm({ onToggleMode }) {
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="member">Member</option>
-              <option value="leader">Leader</option>
+              <option value="Member">Member</option>
+              <option value="Leader">Leader</option>
             </select>
             <p className="mt-1 text-xs text-gray-500">
               {formData.role === 'leader' 

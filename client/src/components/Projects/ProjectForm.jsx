@@ -1,64 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { demoProjects } from '../../lib/demoData';
 import { X, Calendar, DollarSign } from 'lucide-react';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
+import { toast } from 'react-toastify';
+import { useForm } from 'react-hook-form';
 
 export default function ProjectForm({ project, onClose, onProjectCreated }) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
-    title: project?.title || '',
-    description: project?.description || '',
-    amount: project?.amount || '',
-    status: project?.status || 'pending',
-    deadline: project?.deadline || '',
-    progress: project?.progress || 0
+  
+  // Default form values, they will be controlled by react-hook-form
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      title: project?.title || '',
+      description: project?.description || '',
+      amount: project?.amount || '',
+      status: project?.status || 'pending',
+      deadline: project?.deadline || '',
+      progress: project?.progress || 0
+    }
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const axiosPublic = useAxiosPublic();
+
+  // Handle form submission
+  const onSubmit = async (data) => {
     if (!profile?.id) return;
 
     setLoading(true);
     setError('');
 
-    try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+    const projectData = {
+      id: project?.id || `project-${Date.now()}`,
+      title: data.title,
+      description: data.description,
+      amount: parseFloat(data.amount) || 0,
+      status: data.status,
+      deadline: data.deadline || null,
+      progress: data.progress,
+      member_id: profile.id,
+      created_at: project?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
 
-      const projectData = {
-        id: project?.id || `project-${Date.now()}`,
-        title: formData.title,
-        description: formData.description,
-        amount: parseFloat(formData.amount) || 0,
-        status: formData.status,
-        deadline: formData.deadline || null,
-        progress: formData.progress,
-        member_id: profile.id,
-        created_at: project?.created_at || new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+    try {
+      let response;
 
       if (project) {
         // Update existing project
-        const index = demoProjects.findIndex(p => p.id === project.id);
-        if (index > -1) {
-          demoProjects[index] = { ...demoProjects[index], ...projectData };
-        }
+        response = await axiosPublic.put(`/api/projects/${project.id}`, projectData);
+        toast.success('Project updated successfully!');
       } else {
         // Create new project
-        demoProjects.push(projectData);
+        response = await axiosPublic.post('/api/projects', projectData);
+        toast.success('Project created successfully!');
       }
 
-      onProjectCreated();
-      onClose(); // Close modal after submission
+      if (response.data) {
+        onProjectCreated();
+        onClose(); // Close modal after submission
+      }
     } catch (err) {
       setError(err.message || 'An error occurred');
+      toast.error(err.message || 'An error occurred');
     } finally {
       setLoading(false);
     }
   };
+
+  // Watch form values (useful for debugging)
+  useEffect(() => {
+    // Update default values with the existing project data when the component is loaded
+    if (project) {
+      setValue('title', project.title);
+      setValue('description', project.description);
+      setValue('amount', project.amount);
+      setValue('status', project.status);
+      setValue('deadline', project.deadline);
+      setValue('progress', project.progress);
+    }
+  }, [project, setValue]);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -84,7 +106,8 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Add Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700">
                   Project Title
@@ -92,12 +115,11 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 <input
                   type="text"
                   id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
+                  {...register('title', { required: 'Title is required' })}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter project title"
                 />
+                {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
               </div>
 
               <div>
@@ -107,11 +129,11 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 <textarea
                   id="description"
                   rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  {...register('description', { required: 'Description is required' })}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Enter project description"
                 />
+                {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -124,11 +146,11 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                     type="number"
                     id="amount"
                     step="0.01"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    {...register('amount', { required: 'Amount is required' })}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     placeholder="0.00"
                   />
+                  {errors.amount && <p className="text-red-500 text-sm">{errors.amount.message}</p>}
                 </div>
 
                 <div>
@@ -137,8 +159,7 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                   </label>
                   <select
                     id="status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    {...register('status')}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="pending">Pending</option>
@@ -158,8 +179,7 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                   <input
                     type="date"
                     id="deadline"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    {...register('deadline')}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -173,30 +193,29 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                     id="progress"
                     min="0"
                     max="100"
-                    value={formData.progress}
-                    onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
+                    {...register('progress')}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
-            </form>
-          </div>
 
-          <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
-            >
-              {loading ? 'Saving...' : project ? 'Update Project' : 'Create Project'}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Cancel
-            </button>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+                >
+                  {loading ? 'Saving...' : project ? 'Update Project' : 'Create Project'}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
