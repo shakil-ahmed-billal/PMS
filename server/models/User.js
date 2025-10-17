@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema({
     enum: ["Leader", "Member"],
     default: "Member",
   },
+  leader_id: { type: String },
+  created_at: { type: Date, default: Date.now },
+  updated_at: { type: Date, default: Date.now },
 });
 
 export default mongoose.model("User", userSchema);

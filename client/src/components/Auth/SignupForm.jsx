@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
 
 export default function SignupForm({ onToggleMode }) {
   const { signUp } = useAuth();
@@ -10,12 +11,14 @@ export default function SignupForm({ onToggleMode }) {
     password: '',
     confirmPassword: '',
     role: 'Member', // Default value is 'member'
+    leader_id: ""
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const [allLeaders, setAllLeaders] = useState([])
+  const axiosPublic = useAxiosPublic()
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +42,8 @@ export default function SignupForm({ onToggleMode }) {
         formData.email,
         formData.password,
         formData.fullName,
-        formData.role
+        formData.role,
+        formData.leader_id
       );
       if (error) {
         setError(error.message);
@@ -51,6 +55,20 @@ export default function SignupForm({ onToggleMode }) {
     }
   };
 
+  useEffect(() => {
+    fetchLeaders();
+  }, [])
+
+  console.log(allLeaders)
+
+  const fetchLeaders = async () => {
+    try {
+      const response = await axiosPublic.get('/api/users/leader');
+      setAllLeaders(response.data);
+    } catch (error) {
+      console.error('Error fetching leaders:', error);
+    }
+  }
   return (
     <div className="w-full max-w-md">
       <div className="bg-white rounded-lg shadow-lg p-8">
@@ -113,13 +131,39 @@ export default function SignupForm({ onToggleMode }) {
               <option value="Leader">Leader</option>
             </select>
             <p className="mt-1 text-xs text-gray-500">
-              {formData.role === 'leader' 
-                ? 'Leaders can view all projects and reports' 
+              {formData.role === 'leader'
+                ? 'Leaders can view all projects and reports'
                 : 'Members can create and manage their own projects'
               }
             </p>
           </div>
-
+          {formData.role === 'Member' && <div>
+            <label htmlFor="leader_id" className="block text-sm font-medium text-gray-700">
+              Leader Name
+            </label>
+            <select
+              id="leader_id"
+              value={formData.leader_id}
+              required
+              onChange={(e) => setFormData({ ...formData, leader_id: e.target.value })}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="" disabled>
+                Select Your Leader
+              </option>
+              {allLeaders.length > 0 ? (
+                allLeaders.map((leader) => (
+                  <option key={leader._id} value={leader._id}>
+                    {leader.name}
+                  </option>
+                ))
+              ) : (
+                <option value="" disabled>
+                  No leaders available
+                </option>
+              )}
+            </select>
+          </div>}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password

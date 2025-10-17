@@ -29,14 +29,15 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const signUp = async (email, password, fullName, role) => {
+  const signUp = async (email, password, fullName, role, leader_id) => {
     try {
       
       const createUser = await axiosPublic.post('/api/users/register', {
         name: fullName,
         email,
         password,
-        role: role
+        role: role,
+        leader_id
       })
 
       if (createUser.data.error) {
