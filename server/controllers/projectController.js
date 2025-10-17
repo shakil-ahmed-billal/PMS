@@ -88,3 +88,13 @@ export const deleteProject = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+//get user projects
+export const getUserProjects = async (req, res) => {
+  try {
+    const projects = await Project.find({ member_id: req.params.id });
+    res.json(projects);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

@@ -8,6 +8,7 @@ import DBconnect from "./config/DBconnect.js";
 import userRouter from "./routers/userRouter.js";
 import projectRouter from "./routers/projectRouter.js";
 import leaderRouter from "./routers/leaderRouter.js";
+import taskRouter from "./routers/taskRouter.js"; 
 
 
 const app = express();
@@ -33,6 +34,7 @@ app.use(morgan("dev"));
 app.use("/api/users", userRouter);
 app.use("/api/projects", projectRouter);
 app.use("/api/leader", leaderRouter);
+app.use("/api/tasks", taskRouter);
 
 
 
