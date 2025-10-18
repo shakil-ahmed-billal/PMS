@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { getAllProjectsWithProfiles } from '../../lib/demoData';
-import { 
-  DollarSign, 
-  Clock, 
-  XCircle, 
-  Target, 
+import {
+  Clock,
+  DollarSign,
+  Filter,
   FolderOpen,
+  Target,
   TrendingUp,
-  Users,
-  Filter
+  XCircle
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
 
 export default function LeaderDashboard() {
   const [projects, setProjects] = useState([]);
@@ -25,40 +25,52 @@ export default function LeaderDashboard() {
   });
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const axiosPublic = useAxiosPublic();
+  const { profile } = useAuth();
 
   useEffect(() => {
-    loadProjectsAndStats();
-  }, []);
+    if (profile?.id) {
+      loadProjectsAndStats();
+    }
+  }, [profile?.id]);
 
   const loadProjectsAndStats = async () => {
     try {
       setLoading(true);
+      const response = await axiosPublic.get(`/api/leader/${profile.id}/projects`);
+      
+      if (response) {
+        const projectsData = response.data.data;
+        setProjects(projectsData);
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+        const stats = {
+          totalProjects: projectsData.length,
+          pendingProjects: projectsData.filter(p => p.status === 'pending').length,
+          completedProjects: projectsData.filter(p => p.status === 'completed').length,
+          cancelledProjects: projectsData.filter(p => p.status === 'cancelled').length,
+          totalAmount: projectsData.reduce((sum, p) => sum + (p.amount || 0), 0),
+          pendingAmount: projectsData.filter(p => p.status === 'pending' || p.status === 'in_progress')
+            .reduce((sum, p) => sum + (p.amount || 0), 0),
+          completedAmount: projectsData.filter(p => p.status === 'completed')
+            .reduce((sum, p) => sum + (p.amount || 0), 0),
+          cancelledAmount: projectsData.filter(p => p.status === 'cancelled')
+            .reduce((sum, p) => sum + (p.amount || 0), 0)
+        };
 
-      const projectsWithProfiles = getAllProjectsWithProfiles();
-      setProjects(projectsWithProfiles);
-
-      // Calculate stats
-      const stats = {
-        totalProjects: projectsWithProfiles.length,
-        pendingProjects: projectsWithProfiles.filter(p => p.status === 'pending').length,
-        completedProjects: projectsWithProfiles.filter(p => p.status === 'completed').length,
-        cancelledProjects: projectsWithProfiles.filter(p => p.status === 'cancelled').length,
-        totalAmount: projectsWithProfiles.reduce((sum, p) => sum + (p.amount || 0), 0),
-        pendingAmount: projectsWithProfiles
-          .filter(p => p.status === 'pending' || p.status === 'in_progress')
-          .reduce((sum, p) => sum + (p.amount || 0), 0),
-        completedAmount: projectsWithProfiles
-          .filter(p => p.status === 'completed')
-          .reduce((sum, p) => sum + (p.amount || 0), 0),
-        cancelledAmount: projectsWithProfiles
-          .filter(p => p.status === 'cancelled')
-          .reduce((sum, p) => sum + (p.amount || 0), 0)
-      };
-
-      setStats(stats);
+        setStats(stats);
+      } else {
+        setProjects([]);
+        setStats({
+          totalProjects: 0,
+          pendingProjects: 0,
+          completedProjects: 0,
+          cancelledProjects: 0,
+          totalAmount: 0,
+          pendingAmount: 0,
+          completedAmount: 0,
+          cancelledAmount: 0
+        });
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -254,44 +266,12 @@ export default function LeaderDashboard() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProjects.map((project) => (
                 <tr key={project.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{project.title}</div>
-                      {project.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {project.description}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{project.profiles.full_name}</div>
-                    <div className="text-sm text-gray-500">{project.profiles.email}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {formatCurrency(project.amount || 0)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${getStatusBadge(project.status)}`}>
-                      {project.status.replace('_', ' ')}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${project.progress}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm text-gray-600">{project.progress}%</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {project.deadline ? new Date(project.deadline).toLocaleDateString() : 'No deadline'}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">{project.title}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{project.member}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{project.amount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{project.status}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{project.progress}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{project.deadline}</td>
                 </tr>
               ))}
             </tbody>

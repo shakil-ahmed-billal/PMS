@@ -20,7 +20,7 @@ export default function ReportsPage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    if (profile?.role === 'leader') {
+    if (profile?.role === 'Leader') {
       loadReportsData();
     }
   }, [profile, selectedMonth, selectedYear]);
@@ -135,7 +135,7 @@ export default function ReportsPage() {
     };
   };
 
-  if (profile?.role !== 'leader') {
+  if (profile?.role !== 'Leader') {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Access denied. This page is only available for leaders.</p>

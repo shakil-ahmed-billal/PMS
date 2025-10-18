@@ -1,17 +1,14 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: {
-    type: String,
-    enum: ["Leader", "Member"],
-    default: "Member",
-  },
-  leader_id: { type: String },
-  created_at: { type: Date, default: Date.now },
-  updated_at: { type: Date, default: Date.now },
+  role: { type: String, enum: ["leader", "member"], default: "member" },
+  leader_id: { type: String }, // link member to leader
+  created_at: { type: Date, default: Date.now }
 });
 
-export default mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+export default User;

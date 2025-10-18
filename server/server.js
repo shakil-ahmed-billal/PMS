@@ -35,6 +35,7 @@ app.use("/api/users", userRouter);
 app.use("/api/projects", projectRouter);
 app.use("/api/leader", leaderRouter);
 app.use("/api/tasks", taskRouter);
+app.use("/api/leader", leaderRouter);
 
 
 

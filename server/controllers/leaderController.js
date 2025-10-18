@@ -1,36 +1,83 @@
+import User from "../models/User.js";
 import Project from "../models/Project.js";
+import mongoose from "mongoose";
 
-//  GET /api/leader/stats
-export const getLeaderStats = async (req, res) => {
+
+export const getMembersByLeader = async (req, res) => {
   try {
-    const allProjects = await Project.find();
+    const { leader_id } = req.params;
+    const members = await User.find({ leader_id, role: "member" });
 
-    const totalProjects = allProjects.length;
-    const totalAmount = allProjects.reduce((a, p) => a + p.amount, 0);
-    const pending = allProjects.filter(p => p.status === "Pending");
-    const completed = allProjects.filter(p => p.status === "Completed");
-    const cancelled = allProjects.filter(p => p.status === "Cancelled");
+    if (!members.length)
+      return res.status(404).json({
+        success: false,
+        message: "No members found under this leader"
+      });
 
-    const pendingAmount = pending.reduce((a, p) => a + p.amount, 0);
-    const completedAmount = completed.reduce((a, p) => a + p.amount, 0);
-    const cancelledAmount = cancelled.reduce((a, p) => a + p.amount, 0);
+    res.status(200).json({ success: true, data: members });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
-    // Example monthly grouping by createdAt month
-    const monthly = {};
-    allProjects.forEach(p => {
-      const m = new Date(p.createdAt).toLocaleString("default", { month: "short" });
-      monthly[m] = (monthly[m] || 0) + p.amount;
-    });
+/**
+ * ✅ 2. Get all projects of members under a leader
+ */
+export const getProjectsByLeader = async (req, res) => {
+  try {
+    const { leader_id } = req.params;
 
-    res.json({
-      totalProjects,
-      totalAmount,
-      pendingAmount,
-      completedAmount,
-      cancelledAmount,
-      monthly,
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(leader_id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid leader_id format"
+      });
+    }
+
+    // Aggregation pipeline
+    const projects = await User.aggregate([
+      {
+        $match: {
+          leader_id: leader_id,
+          role: { $regex: /^member$/i } // Match both "Member" or "member"
+        }
+      },
+      {
+        $addFields: {
+          userIdString: { $toString: "$_id" } // convert _id to string
+        }
+      },
+      {
+        $lookup: {
+          from: "projects",
+          localField: "userIdString",
+          foreignField: "member_id",
+          as: "projects"
+        }
+      },
+      { $unwind: "$projects" },
+      { $replaceRoot: { newRoot: "$projects" } }
+    ]);
+
+    if (!projects.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No projects found under this leader"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      total_projects: projects.length,
+      data: projects
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Error fetching leader projects:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: err.message
+    });
   }
 };

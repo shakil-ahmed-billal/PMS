@@ -27,7 +27,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     filterProjects();
-  }, [projects, searchTerm, statusFilter]);
+  }, [projects, searchTerm, statusFilter ]);
 
   const loadProjects = async () => {
     if (!profile?.id) return;
@@ -38,11 +38,11 @@ export default function ProjectsPage() {
 
 
       let data;
-      if (profile.role === 'leader') {
+      if (profile.role === 'Leader') {
         // Leaders can see all projects with member info
         // data = getAllProjectsWithProfiles();
-        data = await axiosPublic.get('/api/projects');
-
+        const response = await axiosPublic.get(`/api/leader/${profile.id}/projects`);
+        data = response.data.data;
       } else {
         // Members only see their own projects
         console.log(profile)
@@ -100,7 +100,7 @@ export default function ProjectsPage() {
           const index = axiosPublic.delete(`/api/projects/${projectId}`);
           if (index) {
 
-            
+
             loadProjects();
             setDropdownOpen(null);
 
@@ -155,7 +155,7 @@ export default function ProjectsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
           <p className="text-gray-600 mt-1">
-            {profile?.role === 'leader'
+            {profile?.role === 'Leader'
               ? 'View and monitor all team projects'
               : 'Manage your projects and track progress'
             }
@@ -216,7 +216,7 @@ export default function ProjectsPage() {
                   <h3 className="text-lg font-medium text-gray-900 truncate">
                     {project.title}
                   </h3>
-                  {profile?.role === 'leader' && 'profiles' in project && (
+                  {profile?.role === 'Leader' && 'profiles' in project && (
                     <p className="text-sm text-gray-500 mt-1">
                       by {project.profiles.full_name}
                     </p>
@@ -267,7 +267,7 @@ export default function ProjectsPage() {
                     )}
                   </div>
                 )}
-                {profile?.role === 'leader' && (
+                {profile?.role === 'Leader' && (
                   <button
                     onClick={() => {
                       setSelectedProject(project)

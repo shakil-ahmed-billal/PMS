@@ -1,10 +1,12 @@
 import express from "express";
-import { getLeaderStats } from "../controllers/leaderController.js";
-import { protect } from "../middleware/authMiddleware.js";
-import { isLeader } from "../middleware/roleMiddleware.js";
+import {
+  getMembersByLeader,
+  getProjectsByLeader
+} from "../controllers/leaderController.js";
 
 const router = express.Router();
 
-router.get("/stats", protect, isLeader, getLeaderStats);
+router.get("/:leader_id/members", getMembersByLeader);
+router.get("/:leader_id/projects", getProjectsByLeader);
 
 export default router;
