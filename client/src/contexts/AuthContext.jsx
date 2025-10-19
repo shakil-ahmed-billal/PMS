@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { demoUsers, demoCredentials, getUserByEmail } from '../lib/demoData';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import useAxiosPublic from '../hooks/useAxiosPublic';
 
 const AuthContext = createContext(undefined);
 
@@ -15,6 +16,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const axiosPublic = useAxiosPublic()
 
   useEffect(() => {
     // Check for stored user session
@@ -27,25 +29,29 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const signUp = async (email, password, fullName, role) => {
+  const signUp = async (email, password, fullName, role, leader_id) => {
     try {
-      // Check if user already exists
-      const existingUser = getUserByEmail(email);
-      if (existingUser) {
-        throw new Error('User already exists');
+      
+      const createUser = await axiosPublic.post('/api/users/register', {
+        name: fullName,
+        email,
+        password,
+        role: role,
+        leader_id
+      })
+
+      if (createUser.data.error) {
+        toast.error('Wow so easy !');
       }
 
-      // Create new demo user
       const newUser = {
-        id: `user-${Date.now()}`,
-        email,
-        full_name: fullName,
-        role,
+        id: createUser.data._id,
+        email: createUser.data.email,
+        full_name: createUser.data.name,
+        role: createUser.data.role,
         created_at: new Date().toISOString(),
-      };
+      }
 
-      // Add to demo users array (in real app, this would be persisted)
-      demoUsers.push(newUser);
       
       // Auto-login the new user
       setUser(newUser);
@@ -60,25 +66,33 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     try {
-      // Check demo credentials
-      const isValidCredential = Object.values(demoCredentials).some(
-        cred => cred.email === email && cred.password === password
-      );
 
-      if (!isValidCredential) {
-        throw new Error('Invalid email or password');
+      const userLogin = await axiosPublic.post('/api/users/login', {
+        email,
+        password
+      })
+
+      if (userLogin) {
+        console.log(userLogin)
+        toast.success('Wow so easy !');
+      } else {
+        toast.error('Wow so easy !');
       }
 
-      const user = getUserByEmail(email);
-      if (!user) {
-        throw new Error('User not found');
+      const newUser = {
+        id: userLogin.data.user._id,
+        email: userLogin.data.user.email,
+        full_name: userLogin.data.user.name,
+        role: userLogin.data.user.role,
+        created_at: new Date().toISOString(),
       }
 
-      setUser(user);
-      setProfile(user);
-      localStorage.setItem('demo-user', JSON.stringify(user));
+      // Auto-login the new user
+      setUser(newUser);
+      setProfile(newUser);
+      localStorage.setItem('demo-user', JSON.stringify(newUser));
 
-      return { data: { user }, error: null };
+      return { data: { user: newUser }, error: null };
     } catch (error) {
       return { data: null, error };
     }

@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { AlertCircle, Calendar, CheckCircle, Clock, DollarSign, CreditCard as Edit3, Plus, Trash2, User, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 import { useAuth } from '../../contexts/AuthContext';
-import { getTasksByProjectId, demoTasks } from '../../lib/demoData';
-import { X, Plus, Calendar, DollarSign, User, CheckCircle, Clock, AlertCircle, Trash2, CreditCard as Edit3 } from 'lucide-react';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
+import { demoTasks } from '../../lib/demoData';
 
 export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
   const { profile } = useAuth();
@@ -17,6 +20,8 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
     deadline: ''
   });
 
+  const axiosPublic = useAxiosPublic();
+
   useEffect(() => {
     loadTasks();
   }, [project.id]);
@@ -24,12 +29,14 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
   const loadTasks = async () => {
     try {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const data = getTasksByProjectId(project.id)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      setTasks(data || []);
+      const taskData = await axiosPublic.get(`/api/tasks/${project.id}`)
+      if (taskData.data) {
+        console.log(taskData)
+        setTasks(taskData.data.data);
+      }
+
     } catch (error) {
       console.error('Error loading tasks:', error);
     } finally {
@@ -41,7 +48,7 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
     e.preventDefault();
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
+
 
       const newTask = {
         id: `task-${Date.now()}`,
@@ -52,15 +59,24 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
         updated_at: new Date().toISOString()
       };
 
-      demoTasks.push(newTask);
+      const createTask = await axiosPublic.post('/api/tasks', newTask).then(res => res.data);
+      if (createTask) {
 
-      setTaskFormData({
-        title: '',
-        description: '',
-        status: 'pending',
-        priority: 'medium',
-        deadline: ''
-      });
+        console.log(createTask)
+
+        setTaskFormData({
+          title: '',
+          description: '',
+          status: 'pending',
+          priority: 'medium',
+          deadline: ''
+        });
+
+        toast.success('Task created successfully!');
+      }
+
+
+
       setShowTaskForm(false);
       loadTasks();
     } catch (error) {
@@ -73,45 +89,61 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
     if (!editingTask) return;
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const index = demoTasks.findIndex(t => t.id === editingTask.id);
-      if (index > -1) {
-        demoTasks[index] = {
-          ...demoTasks[index],
-          ...taskFormData,
-          deadline: taskFormData.deadline || null,
-          updated_at: new Date().toISOString()
-        };
+      const updateTask = await axiosPublic.put(`/api/tasks/${editingTask.id}`, taskFormData)
+
+      if (updateTask) {
+        console.log(updateTask)
+
+
+        setEditingTask(null);
+        setShowTaskForm(false);
+        setTaskFormData({
+          title: '',
+          description: '',
+          status: 'pending',
+          priority: 'medium',
+          deadline: ''
+        });
+        loadTasks();
+        toast.success('Task updated successfully!');
       }
 
-      setEditingTask(null);
-      setShowTaskForm(false);
-      setTaskFormData({
-        title: '',
-        description: '',
-        status: 'pending',
-        priority: 'medium',
-        deadline: ''
-      });
-      loadTasks();
+
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
 
   const handleDeleteTask = async (taskId) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
+
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const index = demoTasks.findIndex(t => t.id === taskId);
-      if (index > -1) {
-        demoTasks.splice(index, 1);
-      }
+      Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!"
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          const deleteTask = await axiosPublic.delete(`/api/tasks/${taskId}`);
+          if (deleteTask) {
+            console.log(deleteTask)
+            Swal.fire({
+              title: "Deleted!",
+              text: "Your file has been deleted.",
+              icon: "success"
+            });
+            loadTasks();
+          }
+        }
+      });
 
-      loadTasks();
+
     } catch (error) {
       console.error('Error deleting task:', error);
     }
@@ -174,7 +206,7 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
     }).format(amount);
   };
 
-  const isOwner = profile?.role === 'member' && project.member_id === profile.id;
+  const isOwner = profile?.role === 'Member' && project.member_id === profile.id;
 
   const statusInfo = getStatusBadge(project.status);
   const StatusIcon = statusInfo.icon;
@@ -235,7 +267,7 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
                         <span>{project.progress}% Complete</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${project.progress}%` }}
                         ></div>
@@ -291,7 +323,7 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
                     {tasks.map((task) => {
                       const taskStatusInfo = getStatusBadge(task.status)
                       const TaskStatusIcon = taskStatusInfo.icon
-                      
+
                       return (
                         <div key={task.id} className="bg-gray-50 rounded-lg p-4">
                           <div className="flex items-start justify-between">

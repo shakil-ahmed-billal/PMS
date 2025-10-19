@@ -28,7 +28,7 @@ export default function Layout({ children, currentPage, onPageChange }) {
   const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard, key: 'dashboard' },
     { name: 'Projects', icon: FolderOpen, key: 'projects' },
-    ...(profile?.role === 'leader' ? [
+    ...(profile?.role === 'Leader' ? [
       { name: 'Reports', icon: BarChart3, key: 'reports' },
     ] : []),
     { name: 'Profile', icon: Settings, key: 'profile' },

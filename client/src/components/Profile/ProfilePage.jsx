@@ -113,7 +113,7 @@ export default function ProfilePage() {
                 </label>
                 <div className="mt-1 p-2 bg-gray-50 border border-gray-200 rounded-md">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${
-                    profile.role === 'leader' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
+                    profile.role === 'Leader' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
                   }`}>
                     {profile.role}
                   </span>

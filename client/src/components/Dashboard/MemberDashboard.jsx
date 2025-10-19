@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { getProjectsByMemberId } from '../../lib/demoData';
-import { 
-  Plus, 
-  FolderOpen, 
-  Clock, 
-  CheckCircle, 
-  XCircle,
+import {
+  Calendar,
+  CheckCircle,
+  Clock,
   DollarSign,
-  TrendingUp,
-  Calendar 
+  FolderOpen,
+  Plus,
+  TrendingUp
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
 import ProjectForm from '../Projects/ProjectForm';
 
 export default function MemberDashboard() {
@@ -28,6 +27,7 @@ export default function MemberDashboard() {
   });
   const [showProjectForm, setShowProjectForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const axiosPublic = useAxiosPublic();
 
   useEffect(() => {
     if (profile?.id) {
@@ -35,48 +35,55 @@ export default function MemberDashboard() {
     }
   }, [profile?.id]);
 
+
+  console.log(projects)
   const loadProjectsAndStats = async () => {
     if (!profile?.id) return;
 
     try {
       setLoading(true);
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Fetch projects from backend
+      const userProjectsData = await axiosPublic.get(`/api/projects/user/${profile.id}`);
+      if (userProjectsData?.data) {
+        const projectsData = userProjectsData.data; // ✅ Fix: data is already the array
+        console.log("Fetched Projects:", projectsData);
 
-      const projectsData = getProjectsByMemberId(profile.id)
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        setProjects(projectsData); // ✅ Fixed line
 
-      setProjects(projectsData || []);
+        // Calculate stats
+        const totalProjects = projectsData.length || 0;
+        const pendingProjects = projectsData.filter(p => p.status === 'pending').length || 0;
+        const inProgressProjects = projectsData.filter(p => p.status === 'in_progress').length || 0;
+        const completedProjects = projectsData.filter(p => p.status === 'completed').length || 0;
+        const cancelledProjects = projectsData.filter(p => p.status === 'cancelled').length || 0;
 
-      // Calculate stats
-      const totalProjects = projectsData?.length || 0;
-      const pendingProjects = projectsData?.filter(p => p.status === 'pending').length || 0;
-      const inProgressProjects = projectsData?.filter(p => p.status === 'in_progress').length || 0;
-      const completedProjects = projectsData?.filter(p => p.status === 'completed').length || 0;
-      const cancelledProjects = projectsData?.filter(p => p.status === 'cancelled').length || 0;
-      
-      const totalAmount = projectsData?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-      const completedAmount = projectsData?.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-      const pendingAmount = projectsData?.filter(p => p.status === 'pending' || p.status === 'in_progress').reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-      const averageProgress = totalProjects > 0 ? Math.round((projectsData?.reduce((sum, p) => sum + p.progress, 0) || 0) / totalProjects) : 0;
+        const totalAmount = projectsData.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+        const completedAmount = projectsData.filter(p => p.status === 'completed').reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+        const pendingAmount = projectsData.filter(p => p.status === 'pending' || p.status === 'in_progress').reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+        const averageProgress = totalProjects > 0
+          ? Math.round(projectsData.reduce((sum, p) => sum + p.progress, 0) / totalProjects)
+          : 0;
 
-      setStats({
-        totalProjects,
-        pendingProjects: pendingProjects + inProgressProjects,
-        completedProjects,
-        cancelledProjects,
-        totalAmount,
-        completedAmount,
-        pendingAmount,
-        averageProgress
-      });
+        setStats({
+          totalProjects,
+          pendingProjects: pendingProjects + inProgressProjects,
+          completedProjects,
+          cancelledProjects,
+          totalAmount,
+          completedAmount,
+          pendingAmount,
+          averageProgress
+        });
+      }
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
   };
+
+
 
   const handleProjectCreated = () => {
     setShowProjectForm(false);
@@ -111,7 +118,7 @@ export default function MemberDashboard() {
         return diffDays <= 7 && diffDays >= 0;
       })
       .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
-    
+
     return upcoming.slice(0, 3);
   };
 
@@ -264,7 +271,7 @@ export default function MemberDashboard() {
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900">{project.progress}%</div>
                       <div className="w-16 bg-gray-200 rounded-full h-2 mt-1">
-                        <div 
+                        <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${project.progress}%` }}
                         ></div>
@@ -305,11 +312,10 @@ export default function MemberDashboard() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          diffDays <= 1 ? 'bg-red-100 text-red-800' : 
-                          diffDays <= 3 ? 'bg-yellow-100 text-yellow-800' : 
-                          'bg-blue-100 text-blue-800'
-                        }`}>
+                        <span className={`text-xs px-2 py-1 rounded-full ${diffDays <= 1 ? 'bg-red-100 text-red-800' :
+                          diffDays <= 3 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
                           {diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : `${diffDays} days`}
                         </span>
                       </div>

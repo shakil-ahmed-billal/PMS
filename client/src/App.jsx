@@ -27,15 +27,15 @@ function AppContent() {
   const renderPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return profile.role === 'leader' ? <LeaderDashboard /> : <MemberDashboard />
+        return profile.role === 'Leader' ? <LeaderDashboard /> : <MemberDashboard />
       case 'projects':
         return <ProjectsPage />
       case 'reports':
-        return profile.role === 'leader' ? <ReportsPage /> : <div>Access denied</div>
+        return profile.role === 'Leader' ? <ReportsPage /> : <div>Access denied</div>
       case 'profile':
         return <ProfilePage />
       default:
-        return profile.role === 'leader' ? <LeaderDashboard /> : <MemberDashboard />
+        return profile.role === 'Leader' ? <LeaderDashboard /> : <MemberDashboard />
     }
   }
 

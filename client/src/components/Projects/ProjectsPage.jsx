@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { Calendar, DollarSign, CreditCard as Edit3, Eye, Filter, MoreVertical, Plus, Search, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getProjectsByMemberId, getAllProjectsWithProfiles, demoProjects } from '../../lib/demoData';
-import { Plus, Search, Filter, CreditCard as Edit3, Trash2, Eye, Calendar, DollarSign, MoreVertical } from 'lucide-react';
-import ProjectForm from './ProjectForm';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
+// import { demoProjects, getAllProjectsWithProfiles } from '../../lib/demoData';
+import Swal from 'sweetalert2';
 import ProjectDetails from './ProjectDetails';
+import ProjectForm from './ProjectForm';
+
 
 export default function ProjectsPage() {
   const { profile } = useAuth();
@@ -16,6 +19,7 @@ export default function ProjectsPage() {
   const [showProjectDetails, setShowProjectDetails] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(null);
+  const axiosPublic = useAxiosPublic();
 
   useEffect(() => {
     loadProjects();
@@ -23,26 +27,30 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     filterProjects();
-  }, [projects, searchTerm, statusFilter]);
+  }, [projects, searchTerm, statusFilter ]);
 
   const loadProjects = async () => {
     if (!profile?.id) return;
 
     try {
       setLoading(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+
+
+
       let data;
-      if (profile.role === 'leader') {
+      if (profile.role === 'Leader') {
         // Leaders can see all projects with member info
-        data = getAllProjectsWithProfiles();
+        // data = getAllProjectsWithProfiles();
+        const response = await axiosPublic.get(`/api/leader/${profile.id}/projects`);
+        data = response.data.data;
       } else {
         // Members only see their own projects
-        data = getProjectsByMemberId(profile.id);
+        console.log(profile)
+        const memberProjects = await axiosPublic.get(`/api/projects/user/${profile.id}`);
+        console.log(memberProjects)
+        data = memberProjects.data;
       }
-      
+
       // Sort by creation date
       data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -74,20 +82,37 @@ export default function ProjectsPage() {
   };
 
   const handleDeleteProject = async (projectId) => {
-    if (!confirm('Are you sure you want to delete this project?')) return;
 
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Remove from demo data
-      const index = demoProjects.findIndex(p => p.id === projectId);
-      if (index > -1) {
-        demoProjects.splice(index, 1);
-      }
 
-      loadProjects();
-      setDropdownOpen(null);
+
+      // Remove from demo data
+      Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Yes, delete it!"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const index = axiosPublic.delete(`/api/projects/${projectId}`);
+          if (index) {
+
+
+            loadProjects();
+            setDropdownOpen(null);
+
+
+            Swal.fire({
+              title: "Deleted!",
+              text: "Your file has been deleted.",
+              icon: "success"
+            });
+          }
+        }
+      });
     } catch (error) {
       console.error('Error deleting project:', error);
     }
@@ -130,8 +155,8 @@ export default function ProjectsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
           <p className="text-gray-600 mt-1">
-            {profile?.role === 'leader' 
-              ? 'View and monitor all team projects' 
+            {profile?.role === 'Leader'
+              ? 'View and monitor all team projects'
               : 'Manage your projects and track progress'
             }
           </p>
@@ -191,13 +216,13 @@ export default function ProjectsPage() {
                   <h3 className="text-lg font-medium text-gray-900 truncate">
                     {project.title}
                   </h3>
-                  {profile?.role === 'leader' && 'profiles' in project && (
+                  {profile?.role === 'Leader' && 'profiles' in project && (
                     <p className="text-sm text-gray-500 mt-1">
                       by {project.profiles.full_name}
                     </p>
                   )}
                 </div>
-                {profile?.role === 'member' && (
+                {profile?.role === 'Member' && (
                   <div className="relative">
                     <button
                       onClick={() => setDropdownOpen(dropdownOpen === project.id ? null : project.id)}
@@ -242,7 +267,7 @@ export default function ProjectsPage() {
                     )}
                   </div>
                 )}
-                {profile?.role === 'leader' && (
+                {profile?.role === 'Leader' && (
                   <button
                     onClick={() => {
                       setSelectedProject(project)
@@ -278,7 +303,7 @@ export default function ProjectsPage() {
                     <span>{project.progress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${project.progress}%` }}
                     ></div>
@@ -300,7 +325,7 @@ export default function ProjectsPage() {
       {filteredProjects.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-500">
-            {searchTerm || statusFilter !== 'all' 
+            {searchTerm || statusFilter !== 'all'
               ? 'No projects found matching your criteria.'
               : 'No projects yet. Create your first project!'
             }
