@@ -7,6 +7,8 @@ import MemberDashboard from './components/Dashboard/MemberDashboard'
 import ProjectsPage from './components/Projects/ProjectsPage'
 import ReportsPage from './components/Reports/ReportsPage'
 import ProfilePage from './components/Profile/ProfilePage'
+import AllMembersPage from './components/Members/AllMembersPage'
+import MemberInfoPage from './components/Members/MemberInfoPage'
 
 function AppContent() {
   const { user, profile, loading } = useAuth()
@@ -28,8 +30,18 @@ function AppContent() {
     switch (currentPage) {
       case 'dashboard':
         return profile.role === 'Leader' ? <LeaderDashboard /> : <MemberDashboard />
+      case 'add-task':
+        return profile.role === 'Member' ? <AddTaskPage /> : <div>Access denied</div>
+      case 'all-tasks':
+        return profile.role === 'Member' ? <AllTasksPage /> : <div>Access denied</div>
       case 'projects':
-        return <ProjectsPage />
+        return profile.role === 'Member' ? <ProjectsPage /> : <div>Access denied</div>
+      case 'all-members':
+        return profile.role === 'Leader' ? <AllMembersPage /> : <div>Access denied</div>
+      case 'member-info':
+        return profile.role === 'Leader' ? <MemberInfoPage /> : <div>Access denied</div>
+      case 'all-projects':
+        return profile.role === 'Leader' ? <ProjectsPage /> : <div>Access denied</div>
       case 'reports':
         return profile.role === 'Leader' ? <ReportsPage /> : <div>Access denied</div>
       case 'profile':
