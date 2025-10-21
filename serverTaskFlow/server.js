@@ -22,7 +22,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://excel-bd.vercel.app",
+      "https://pms-tau-ten.vercel.app",
     ],
     credentials: true,
   })
