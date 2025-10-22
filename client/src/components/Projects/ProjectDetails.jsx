@@ -59,7 +59,7 @@ export default function ProjectDetails({ project, onClose, onProjectUpdated }) {
         updated_at: new Date().toISOString()
       };
 
-      const createTask = await axiosPublic.post('/api/tasks', newTask).then(res => res.data);
+      const createTask = await axiosPublic.post('/api/tasks', newTask)
       if (createTask) {
 
         console.log(createTask)

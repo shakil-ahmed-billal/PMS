@@ -9,6 +9,8 @@ import ReportsPage from './components/Reports/ReportsPage'
 import ProfilePage from './components/Profile/ProfilePage'
 import AllMembersPage from './components/Members/AllMembersPage'
 import MemberInfoPage from './components/Members/MemberInfoPage'
+import AddTaskPage from './components/Tasks/AddTaskPage'
+import AllTasksPage from './components/Tasks/AllTasksPage'
 
 function AppContent() {
   const { user, profile, loading } = useAuth()
