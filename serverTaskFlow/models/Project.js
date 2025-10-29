@@ -16,6 +16,10 @@ const projectSchema = new mongoose.Schema(
     member_id: { type: String, required: true }, // store member ID as string
     created_at: { type: Date, default: Date.now },
     updated_at: { type: Date, default: Date.now },
+    telegramURL: { type: String },
+    sheetURL: { type: String },
+    projectPhotoURL: { type: String },
+    websiteURL: { type: String },
   },
   { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
 );

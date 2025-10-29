@@ -3,7 +3,7 @@ import Project from "../models/Project.js";
 // 🟢 Create new project
 export const createProject = async (req, res) => {
   try {
-    const { id, title, description, amount, status, deadline, progress, member_id } = req.body;
+    const { id, title, description, amount, status, deadline, progress, member_id , telegramURL, sheetURL, projectPhotoURL, websiteURL} = req.body;
 
     // Validate required fields
     if (!id || !title || !member_id) {
@@ -15,6 +15,7 @@ export const createProject = async (req, res) => {
       return res.status(400).json({ message: "Project ID already exists." });
     }
 
+
     const project = await Project.create({
       id,
       title,
@@ -24,6 +25,11 @@ export const createProject = async (req, res) => {
       deadline,
       progress,
       member_id,
+      telegramURL,
+      sheetURL,
+      projectPhotoURL,
+      websiteURL
+
     });
 
     res.status(201).json({ message: "Project created successfully", project });

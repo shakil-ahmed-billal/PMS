@@ -4,6 +4,9 @@ import { useAuth } from '../../contexts/AuthContext';
 import useAxiosPublic from '../../hooks/useAxiosPublic';
 // import { demoProjects, getAllProjectsWithProfiles } from '../../lib/demoData';
 import Swal from 'sweetalert2';
+import live from '../../assets/icon/live.png';
+import Sheet from '../../assets/icon/sheets.png';
+import telegram from '../../assets/icon/telegram.png';
 import ProjectDetails from './ProjectDetails';
 import ProjectForm from './ProjectForm';
 
@@ -27,7 +30,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     filterProjects();
-  }, [projects, searchTerm, statusFilter ]);
+  }, [projects, searchTerm, statusFilter]);
 
   const loadProjects = async () => {
     if (!profile?.id) return;
@@ -286,6 +289,16 @@ export default function ProjectsPage() {
                 </p>
               )}
 
+              {project.projectPhotoURL && (
+                <div className="mt-4">
+                  <img
+                    src={project.projectPhotoURL}
+                    alt={project.title}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+
               <div className="mt-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full capitalize ${getStatusBadge(project.status)}`}>
@@ -311,9 +324,28 @@ export default function ProjectsPage() {
                 </div>
 
                 {project.deadline && (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {new Date(project.deadline).toLocaleDateString()}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {new Date(project.deadline).toLocaleDateString()}
+                    </div>
+                    <div className="flex items-center">
+                      {project.telegramURL && (
+                        <a href={project.telegramURL} target="_blank" rel="noopener noreferrer" className="ml-2">
+                          <img src={telegram} className="w-6 h-6" alt="Telegram" />
+                        </a>
+                      )}
+                      {project.sheetURL && (
+                        <a href={project.sheetURL} target="_blank" rel="noopener noreferrer" className="ml-2">
+                          <img src={Sheet} className="w-6 h-6" alt="Google Sheet" />
+                        </a>
+                      )}
+                      {project.websiteURL && (
+                        <a href={project.websiteURL} target="_blank" rel="noopener noreferrer" className="ml-2">
+                          <img src={live} className="w-6 h-6" alt="Live" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

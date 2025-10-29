@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { X, Calendar, DollarSign } from 'lucide-react';
-import useAxiosPublic from '../../hooks/useAxiosPublic';
-import { toast } from 'react-toastify';
+import { Calendar, DollarSign, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
+import { useAuth } from '../../contexts/AuthContext';
+import useAxiosPublic from '../../hooks/useAxiosPublic';
+import { imageUpload } from '../../API/ImageAPI';
+import { UserRoundPen } from 'lucide-react';
 
 export default function ProjectForm({ project, onClose, onProjectCreated }) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+    const [image, setImage] = useState(null)
+     const [imageLink, setImageLink] = useState("");
+
   // Default form values, they will be controlled by react-hook-form
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     defaultValues: {
@@ -18,11 +22,25 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
       amount: project?.amount || '',
       status: project?.status || 'pending',
       deadline: project?.deadline || '',
-      progress: project?.progress || 0
+      progress: project?.progress || 0,
+      telegramURL: project?.telegramURL || '',
+      sheetURL: project?.sheetURL || '',
+      imageFile: project?.projectPhotoURL || '',
+      websiteURL: project?.websiteURL || ''
     }
   });
 
   const axiosPublic = useAxiosPublic();
+   // user image profile function
+  const handleFileChange = (e) => {
+    e.preventDefault();
+    const file = e.target.files[0];
+    setImage(file)
+    if (file) {
+      const imageURL = URL.createObjectURL(file);
+      setImageLink(imageURL);
+    }
+  };
 
   // Handle form submission
   const onSubmit = async (data) => {
@@ -30,6 +48,9 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
 
     setLoading(true);
     setError('');
+
+    const imageFile = image
+    const projectPhotoURL = await imageUpload(imageFile)
 
     const projectData = {
       id: project?.id || `project-${Date.now()}`,
@@ -41,7 +62,11 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
       progress: data.progress,
       member_id: profile.id,
       created_at: project?.created_at || new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      telegramURL: data.telegramURL,
+      sheetURL: data.sheetURL,
+      projectPhotoURL,
+      websiteURL: data.websiteURL
     };
 
     try {
@@ -79,6 +104,10 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
       setValue('status', project.status);
       setValue('deadline', project.deadline);
       setValue('progress', project.progress);
+      setValue('telegramURL', project.telegramURL);
+      setValue('sheetURL', project.sheetURL);
+      setValue('projectPhotoURL', project.projectPhotoURL);
+      setValue('websiteURL', project.websiteURL);
     }
   }, [project, setValue]);
 
@@ -105,6 +134,27 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 {error}
               </div>
             )}
+              {/* yser profile image section */}
+            <div className=" text-center dark:text-light2 flex flex-row-reverse justify-center items-center gap-3">
+              <input
+                type="file"
+                name="image"
+                id="fourthImage"
+                className="w-28"
+                onChange={handleFileChange} />
+              <div className="w-[100px] h-[100px] rounded-full border border-[#e5eaf2] flex items-center justify-center">
+                {!imageLink ? (
+                  <UserRoundPen className="size-10 text-[#e5eaf2]" />
+                ) : (
+                  <img
+                    src={imageLink}
+                    alt="image"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                )}
+              </div>
+            </div>
+            {/* yser profile image section */}
 
             {/* Add Form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -121,7 +171,51 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 />
                 {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
               </div>
+              {/* new telegram url field added */}
+              <div>
+                <label htmlFor="telegramURL" className="block text-sm font-medium text-gray-700">
+                  Telegram URL
+                </label>
 
+                <input
+                  type="telegramURL"
+                  id="telegramURL"
+                  {...register('telegramURL', { required: 'telegramURL is required' })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter project title"
+                />
+                {errors.telegramURL && <p className="text-red-500 text-sm">{errors.telegramURL.message}</p>}
+              </div>
+               {/* new website url field added */}
+              <div>
+                <label htmlFor="websiteURL" className="block text-sm font-medium text-gray-700">
+                  Website URL
+                </label>
+
+                <input
+                  type="websiteURL"
+                  id="websiteURL"
+                  {...register('websiteURL', { required: 'websiteURL is required' })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter project title"
+                />
+                {errors.websiteURL && <p className="text-red-500 text-sm">{errors.websiteURL.message}</p>}
+              </div>
+              {/* new google sheet fields added */}
+              <div>
+                <label htmlFor="sheetURl" className="block text-sm font-medium text-gray-700">
+                  Project Google Sheet URL</label>
+
+                <input
+                  type="sheetURL"
+                  id="sheetURL"
+                  {...register('sheetURL', { required: 'sheetURL is required' })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter project title"
+                />
+                {errors.sheetURL && <p className="text-red-500 text-sm">{errors.sheetURL.message}</p>}
+              </div>
+              
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                   Description
@@ -135,6 +229,7 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 />
                 {errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
               </div>
+
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
