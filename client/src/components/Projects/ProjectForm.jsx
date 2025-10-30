@@ -1,18 +1,17 @@
-import { Calendar, DollarSign, X } from 'lucide-react';
+import { Calendar, DollarSign, UserRoundPen, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
+import { imageUpload } from '../../API/ImageAPI';
 import { useAuth } from '../../contexts/AuthContext';
 import useAxiosPublic from '../../hooks/useAxiosPublic';
-import { imageUpload } from '../../API/ImageAPI';
-import { UserRoundPen } from 'lucide-react';
 
 export default function ProjectForm({ project, onClose, onProjectCreated }) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-    const [image, setImage] = useState(null)
-     const [imageLink, setImageLink] = useState("");
+  const [image, setImage] = useState(null)
+  const [imageLink, setImageLink] = useState("");
 
   // Default form values, they will be controlled by react-hook-form
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
@@ -26,12 +25,13 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
       telegramURL: project?.telegramURL || '',
       sheetURL: project?.sheetURL || '',
       imageFile: project?.projectPhotoURL || '',
-      websiteURL: project?.websiteURL || ''
+      websiteURL: project?.websiteURL || '',
+      projectPhotoURL: project?.projectPhotoURL || '',
     }
   });
 
   const axiosPublic = useAxiosPublic();
-   // user image profile function
+  // user image profile function
   const handleFileChange = (e) => {
     e.preventDefault();
     const file = e.target.files[0];
@@ -49,8 +49,13 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
     setLoading(true);
     setError('');
 
-    const imageFile = image
-    const projectPhotoURL = await imageUpload(imageFile)
+    let projectPhotoLink = '' ;
+
+    if (image) {
+      const imageFile = image
+      const imageURL = await imageUpload(imageFile)
+      projectPhotoLink = imageURL;
+    }
 
     const projectData = {
       id: project?.id || `project-${Date.now()}`,
@@ -65,7 +70,7 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
       updated_at: new Date().toISOString(),
       telegramURL: data.telegramURL,
       sheetURL: data.sheetURL,
-      projectPhotoURL,
+      projectPhotoURL: image ? projectPhotoLink : data.projectPhotoURL || '',
       websiteURL: data.websiteURL
     };
 
@@ -134,7 +139,7 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 {error}
               </div>
             )}
-              {/* yser profile image section */}
+            {/* yser profile image section */}
             <div className=" text-center dark:text-light2 flex flex-row-reverse justify-center items-center gap-3">
               <input
                 type="file"
@@ -186,7 +191,7 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 />
                 {errors.telegramURL && <p className="text-red-500 text-sm">{errors.telegramURL.message}</p>}
               </div>
-               {/* new website url field added */}
+              {/* new website url field added */}
               <div>
                 <label htmlFor="websiteURL" className="block text-sm font-medium text-gray-700">
                   Website URL
@@ -215,7 +220,7 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                 />
                 {errors.sheetURL && <p className="text-red-500 text-sm">{errors.sheetURL.message}</p>}
               </div>
-              
+
               <div>
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700">
                   Description
@@ -272,12 +277,13 @@ export default function ProjectForm({ project, onClose, onProjectCreated }) {
                     Deadline
                   </label>
                   <input
-                    type="date"
+                    type="datetime-local"
                     id="deadline"
                     {...register('deadline')}
                     className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
+
 
                 <div>
                   <label htmlFor="progress" className="block text-sm font-medium text-gray-700">
